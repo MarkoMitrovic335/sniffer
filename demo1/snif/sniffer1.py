@@ -1,8 +1,10 @@
 import pyshark
 import msgpack
-from model import data
+import sys
+sys.path.append('/home/marko/PROJECTS/ast-proxy/demo1/model/')
+import data
 from sqlalchemy.orm import sessionmaker
-
+import json
 # creating engine from data model function
 engine = data.db_create()
 
@@ -11,7 +13,7 @@ session = sessionmaker(bind=engine)()
 
 def capture_packets():
     
-    filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='ip.dst == 192.168.1.106 || http.host == 192.168.1.106') #ip.dst is a destination address and it will recive an ip layer for that address
+    filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='ip.dst == 192.168.1.106 || http.host == 192.168.1.160') #ip.dst is a destination address and it will recive an ip layer for that address
 
     # filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='http.host == 192.168.1.106') #this should be used only and it should work without try and catch
 
@@ -19,9 +21,9 @@ def capture_packets():
 
     for packet in filtered_capture.sniff_continuously():
 
-        packet.pretty_print()
-
-        # try and catch using cause of display filter, it will try to cathc http layer
+        # packet.pretty_print()
+        
+        # try and catch using cause of display filter, it will try to catch http layer
         try:
     #     collecting data from packets
             time_stamp = str(packet.sniff_time)
@@ -29,8 +31,8 @@ def capture_packets():
             destination_address = packet.http.host
             method = packet.http.request_method
             destination_api = packet.http.referer
-            payload = packet.tcp.payload    
-                    
+            payload = packet.tcp.payload
+                                
         #   creating data object
             data_obj = data.Data(time_stamp,source_address,destination_address,method,destination_api,payload)
 
@@ -47,7 +49,7 @@ def reading_from_db():
     result = [i for i in session.query(data.Data).all()]
 
     for d in result:
-                
+        # print(d.time_stamp)
         # taking valuse from db
         time_db=d.time_stamp
         source_address_db=d.source_address
@@ -84,7 +86,7 @@ def capture_http_response():
 
 # for capturing all packets of an given ip
 capture_packets()
-
+# reading_from_db()
 # this function is for reading data from db and is been called in capure_packet function
 # reading_from_db()
 

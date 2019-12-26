@@ -2,3 +2,5 @@ pypcap
 pyshark
 sqlalchemy
 msgpack
+aiohttp
+asyncio

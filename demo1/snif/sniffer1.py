@@ -5,6 +5,8 @@ sys.path.append('/home/marko/PROJECTS/ast-proxy/demo1/model/')
 import data
 from sqlalchemy.orm import sessionmaker
 import json
+from urllib import request
+
 # creating engine from data model function
 engine = data.db_create()
 
@@ -13,16 +15,32 @@ session = sessionmaker(bind=engine)()
 
 def capture_packets():
     
-    filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='ip.dst == 192.168.1.106 || http.host == 192.168.1.160') #ip.dst is a destination address and it will recive an ip layer for that address
+    filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='http.host == 192.168.1.160') #ip.dst is a destination address and it will recive an ip layer for that address
 
     # filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='http.host == 192.168.1.106') #this should be used only and it should work without try and catch
 
     # filtered_capture = pyshark.LiveCapture(interface='enp3s0',display_filter='ip.src == 192.168.1.106') #ip src is an ip as a source address and it will recive and send all packets from that source address
 
     for packet in filtered_capture.sniff_continuously():
-
-        # packet.pretty_print()
         
+        packet.pretty_print()
+        
+        # for current_layer in packet.layers:
+        #     print(current_layer.Referer)
+        # try:
+        #     print(packet.http.Referer)
+        # except:
+        #     pass
+
+        # webFile = request.urlopen(packet.http.Referer).read()
+        # print(webFile)
+
+        # try:
+        #     with open(str(packet.http.Referer), 'r') as f:
+        #         html_string = f.read()
+        #         print(html_string)
+        # except:
+        #     pass
         # try and catch using cause of display filter, it will try to catch http layer
         try:
     #     collecting data from packets
@@ -32,7 +50,7 @@ def capture_packets():
             method = packet.http.request_method
             destination_api = packet.http.referer
             payload = packet.tcp.payload
-                                
+    
         #   creating data object
             data_obj = data.Data(time_stamp,source_address,destination_address,method,destination_api,payload)
 
@@ -41,7 +59,7 @@ def capture_packets():
             session.commit()
                 
             # calling a function - reading_from_db()
-            reading_from_db()
+            # reading_from_db()
         except:
            pass
 

@@ -9,7 +9,7 @@ from reqres import ReqRes
 async def function_one(request):
     path = request.match_info.get('path', '')
     path = f'/{path}'
-    print(f'DEBUG: path: {path!r}')
+    # print(f'DEBUG: path: {path!r}')
 
     # query database
     session = Session()
@@ -31,9 +31,6 @@ async def function_one(request):
         res_content_type = None
         res_payload = None
 
-    print(f'{res_status!r}')
-    print(f'{res_content_type!r}')
-
     session.close()
     session = None
     
@@ -48,7 +45,7 @@ async def function_one(request):
     res_content_type = res_content_type.split(';')[0]
 
     res = web.Response(
-        text=res_payload,
+        body=res_payload if isinstance(res_payload, bytes) else res_payload.encode(),
         status=res_status,
         headers=None,
         content_type=res_content_type,

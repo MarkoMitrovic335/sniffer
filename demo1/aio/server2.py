@@ -16,9 +16,9 @@ async def function_one(request):
     q = session.query(ReqRes)
     
     q = q.filter(
-        ReqRes.req_method=='GET',
+        ReqRes.req_method=='GET',   # query filter
         ReqRes.req_path==path,
-    )
+    ) 
 
     reqres = q.first()
     

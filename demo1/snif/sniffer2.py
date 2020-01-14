@@ -4,14 +4,18 @@ import json
 from urllib import request
 from urllib.parse import urlparse
 from pprint import pprint
+from collections import namedtuple
+
 import msgpack
 import pyshark
+
 from base import Session
 from reqres import ReqRes
 
 # temp request
 reqs = {}
 
+# decoding payload
 def parse_http_payload(payload: str) -> bytes:
     body = []
 
@@ -29,6 +33,7 @@ def parse_http_path_from_uri(uri):
     path = uri[s:]
     return path
 
+# capturing packets
 def capture_packets():
     global reqs
 
@@ -42,15 +47,13 @@ def capture_packets():
     for packet in filtered_capture.sniff_continuously():
         if not hasattr(packet, 'http'):
             continue
-            
-        if packet.ip.dst == '192.168.1.160' and getattr(packet.http, 'request', None):
-
+        
+        
+        if packet.ip.dst == '192.168.1.160' and getattr(packet.http, 'request', None):  # http request
             key = packet.http.request_uri
             value = packet
             reqs[key] = value
-
-        elif packet.ip.src == '192.168.1.160' and getattr(packet.http, 'response', None):
-            
+        elif packet.ip.src == '192.168.1.160' and getattr(packet.http, 'response', None):   # http response
             uri = packet.http.response_for_uri
             path = parse_http_path_from_uri(uri)
             key = path
@@ -62,18 +65,22 @@ def capture_packets():
             # req/res packets
             req_packet = value
             res_packet = packet
+            
+            # req_payload = getattr(req_packet.http, 'file_data', namedtuple('file_data', ['binary_value'])(b'')).binary_value
+            if hasattr(req_packet.http, 'file_data'):
+                req_payload = req_packet.http.file_data.binary_value
+            else:
+                req_payload = b''
 
-            res_content_type=res_packet.http.content_type
-            res_payload=getattr(res_packet.http, 'file_data', '').replace('\\xa', '')
+            try:
+                res_content_type = res_packet.http.content_type
+                res_payload = res_packet.http.file_data.binary_value # payload in binary
+            except:
+                pass
 
-            if res_content_type == 'image/gif':
-
-                res_payload = res_packet.http.file_data.binary_value     
-                
-            if res_content_type == 'image/jpeg':
-
-                res_payload = res_packet.http.file_data.binary_value
-
+            if not res_payload:
+                res_payload = getattr(res_packet.http, 'file_data', '') 
+                        
             # session
             session = Session()
             
@@ -82,7 +89,7 @@ def capture_packets():
                 req_method=req_packet.http.request_method,
                 req_path=req_packet.http.request_uri,
                 req_headers=None,
-                req_payload=getattr(req_packet.http, 'file_data', '').replace('\\xa', ''),
+                req_payload=req_payload,
                 res_ts=str(res_packet.sniff_time),
                 res_status=int(res_packet.http.response_code),
                 res_content_type=res_content_type,
@@ -98,3 +105,4 @@ def capture_packets():
 
 # for capturing all packets of an given ip
 capture_packets()
+

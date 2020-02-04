@@ -4,7 +4,6 @@ from sqlalchemy import Column, Integer, String
 
 from base import Base, engine
 
-
 class ReqRes(Base):
     __tablename__ = 'ReqRes'
     id = Column(Integer, primary_key=True)

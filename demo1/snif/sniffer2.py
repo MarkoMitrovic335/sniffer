@@ -27,6 +27,7 @@ def parse_http_payload(payload: str) -> bytes:
     body = bytes(body)
     return body
 
+# parsing url path
 def parse_http_path_from_uri(uri):
     o = urlparse(uri)
     s = len(f'{o.scheme}://{o.netloc}')
@@ -45,20 +46,30 @@ def capture_packets():
     )
 
     for packet in filtered_capture.sniff_continuously():
+        
         if not hasattr(packet, 'http'):
             continue
         
-        
-        if packet.ip.dst == '192.168.1.160' and getattr(packet.http, 'request', None):  # http request
+        # ///
+        tmp_url = ""
+        try:
+            tmp_url = packet.http.request_uri
+        except:
+            pass
+        if tmp_url == "/login.cgi":
+            print("found")
+        # ///
+
+        if packet.ip.dst == '192.168.1.1' and getattr(packet.http, 'request', None):  # http request
             key = packet.http.request_uri
             value = packet
             reqs[key] = value
-        elif packet.ip.src == '192.168.1.160' and getattr(packet.http, 'response', None):   # http response
+        elif packet.ip.src == '192.168.1.1' and getattr(packet.http, 'response', None):   # http response
             uri = packet.http.response_for_uri
             path = parse_http_path_from_uri(uri)
             key = path
             value = reqs.get(key, None)
-
+            
             if not value:
                 continue
             
@@ -71,13 +82,18 @@ def capture_packets():
                 req_payload = req_packet.http.file_data.binary_value
             else:
                 req_payload = b''
-
+            
             try:
                 res_content_type = res_packet.http.content_type
                 res_payload = res_packet.http.file_data.binary_value # payload in binary
             except:
                 pass
 
+            # print(res_packet.http.content_type)
+
+            # if res_packet.http.content_type=="image/png":
+            #     print(dir(res_packet.http.content_type))
+                
             if not res_payload:
                 res_payload = getattr(res_packet.http, 'file_data', '') 
                         
@@ -95,9 +111,10 @@ def capture_packets():
                 res_content_type=res_content_type,
                 res_payload=res_payload,
             )
-
+            
+            
             # print('!', len(getattr(res_packet.http, 'file_data', '')))
-
+            print("packet arived")
             session.add(reqres)
             session.commit()
             session.close()

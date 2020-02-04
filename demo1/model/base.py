@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 
 def db_create():
-    engine = create_engine('sqlite:///./../model/demo1.db')
+    engine = create_engine('sqlite:///./../model/demo2.db')
     return engine
 
 # engine

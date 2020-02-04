@@ -6,7 +6,7 @@ from aiohttp import web
 from base import Session
 from reqres import ReqRes
 
-async def function_one(request):
+async def handler(request):
     path = request.match_info.get('path', '')
     path = f'/{path}'
     # print(f'DEBUG: path: {path!r}')
@@ -16,16 +16,21 @@ async def function_one(request):
     q = session.query(ReqRes)
     
     q = q.filter(
-        ReqRes.req_method=='GET',   # query filter
+        ReqRes.req_method=='GET', # query filter
         ReqRes.req_path==path,
     ) 
 
     reqres = q.first()
     
     if reqres:
+        # pprint(reqres)
+        # pprint(dir(reqres))
         res_status = reqres.res_status
         res_content_type = reqres.res_content_type
         res_payload = reqres.res_payload
+        # print(res_status)
+        # print(res_content_type)
+        # print(res_payload)
     else:
         res_status = 500
         res_content_type = None
@@ -35,12 +40,13 @@ async def function_one(request):
     session = None
     
     if not res_payload:
+        
         return web.Response(
             status=res_status,
             body=b'',
             content_type='text/html'
         )
-
+    
     # query against database for `path`
     res_content_type = res_content_type.split(';')[0]
 
@@ -56,8 +62,8 @@ async def function_one(request):
 app = web.Application()
 
 app.add_routes([
-    web.get('/{path:.*}', function_one)
+    web.get('/{path:.*}', handler)
 ])
 
 if __name__ == '__main__':
-    web.run_app(app)
+    web.run_app(app, host="printer.com")

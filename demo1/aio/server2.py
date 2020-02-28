@@ -7,20 +7,38 @@ from base import Session
 from reqres import ReqRes
 
 async def handler(request):
+    
     path = request.match_info.get('path', '')
+    # print(path)
     path = f'/{path}'
     # print(f'DEBUG: path: {path!r}')
-
+    # print(path)
+    
+    if path == '/login.cgi':
+        path = '/index.asp'
+        # print("RESIM")
+    # if path == '/Main_Login.asp':
+    #     path = '/index.asp'
+  
     # query database
+            
     session = Session()
     q = session.query(ReqRes)
     
+    # q = q.filter(
+    #     ReqRes.req_method=='GET', # query filter
+    #     ReqRes.req_path==path,
+    # ) 
     q = q.filter(
-        ReqRes.req_method=='GET', # query filter
         ReqRes.req_path==path,
     ) 
-
     reqres = q.first()
+    
+    # try:
+    #     if reqres.req_method=='POST':
+    #         print('DEBIGING')
+    # except:
+    #     pass
     
     if reqres:
         # pprint(reqres)
@@ -31,11 +49,12 @@ async def handler(request):
         # print(res_status)
         # print(res_content_type)
         # print(res_payload)
+        
     else:
         res_status = 500
         res_content_type = None
         res_payload = None
-
+        
     session.close()
     session = None
     
@@ -46,7 +65,7 @@ async def handler(request):
             body=b'',
             content_type='text/html'
         )
-    
+ 
     # query against database for `path`
     res_content_type = res_content_type.split(';')[0]
 
@@ -56,13 +75,14 @@ async def handler(request):
         headers=None,
         content_type=res_content_type,
     )
-
+    
     return res
 
 app = web.Application()
 
 app.add_routes([
-    web.get('/{path:.*}', handler)
+    web.get('/{path:.*}', handler),
+    web.post('/{path:.*}', handler)
 ])
 
 if __name__ == '__main__':

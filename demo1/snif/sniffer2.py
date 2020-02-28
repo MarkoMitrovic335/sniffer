@@ -49,16 +49,6 @@ def capture_packets():
         
         if not hasattr(packet, 'http'):
             continue
-        
-        # ///
-        tmp_url = ""
-        try:
-            tmp_url = packet.http.request_uri
-        except:
-            pass
-        if tmp_url == "/login.cgi":
-            print("found")
-        # ///
 
         if packet.ip.dst == '192.168.1.1' and getattr(packet.http, 'request', None):  # http request
             key = packet.http.request_uri
@@ -68,6 +58,7 @@ def capture_packets():
             uri = packet.http.response_for_uri
             path = parse_http_path_from_uri(uri)
             key = path
+            
             value = reqs.get(key, None)
             
             if not value:
@@ -77,7 +68,6 @@ def capture_packets():
             req_packet = value
             res_packet = packet
             
-            # req_payload = getattr(req_packet.http, 'file_data', namedtuple('file_data', ['binary_value'])(b'')).binary_value
             if hasattr(req_packet.http, 'file_data'):
                 req_payload = req_packet.http.file_data.binary_value
             else:
@@ -88,7 +78,10 @@ def capture_packets():
                 res_payload = res_packet.http.file_data.binary_value # payload in binary
             except:
                 pass
-
+            
+            
+            res_payload=getattr(res_packet.http, 'file_data', '').replace('\\xa', '')
+                        
             # print(res_packet.http.content_type)
 
             # if res_packet.http.content_type=="image/png":
@@ -99,7 +92,7 @@ def capture_packets():
                         
             # session
             session = Session()
-            
+            # print((packet.http))
             reqres = ReqRes(
                 req_ts=str(req_packet.sniff_time),
                 req_method=req_packet.http.request_method,
